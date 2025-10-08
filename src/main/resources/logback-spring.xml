@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true">
+
+    <!-- Import properties from application.yml -->
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="matchhire"/>
+    <springProperty scope="context" name="ACTIVE_PROFILE" source="spring.profiles.active" defaultValue="dev"/>
+
+    <!-- ==== Common pattern for DEV environment ==== -->
+    <property name="CONSOLE_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%highlight(%-5level)] [%cyan(${APP_NAME})] [%X{traceId}] [%thread] %logger{36} - %msg%n"/>
+
+    <!-- ==== Directory for log files ==== -->
+    <property name="LOG_PATH" value="logs"/>
+
+    <!-- ==== Appenders ==== -->
+
+    <!-- Console appender (DEV: colored, readable logs) -->
+    <appender name="ConsoleDev" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- JSON Console appender (TEST/PROD: structured logs) -->
+    <appender name="JsonConsole" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp/>       <!-- Log timestamp -->
+                <version/>         <!-- Logstash version -->
+                <logLevel/>        <!-- Log level -->
+                <threadName/>      <!-- Thread name -->
+                <loggerName/>      <!-- Logger name -->
+                <message/>         <!-- Log message -->
+                <mdc/>             <!-- MDC properties (traceId, etc.) -->
+                <context/>         <!-- Logger context info -->
+                <callerData/>      <!-- Caller class/method/line -->
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- File appender with daily rotation -->
+    <appender name="FileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/${APP_NAME}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- Daily rotated and compressed log files -->
+            <fileNamePattern>${LOG_PATH}/archive/%d{yyyy-MM-dd}/${APP_NAME}.log.gz</fileNamePattern>
+            <!-- Keep logs for 30 days -->
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp/>
+                <logLevel/>
+                <loggerName/>
+                <threadName/>
+                <message/>
+                <mdc/>
+                <callerData/>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- ==== Environment-specific configurations ==== -->
+
+    <!-- DEV profile: colored console output -->
+    <springProfile name="dev">
+        <root level="DEBUG">
+            <appender-ref ref="ConsoleDev"/>
+        </root>
+    </springProfile>
+
+    <!-- TEST and PROD profiles: JSON + file rotation -->
+    <springProfile name="test,prod">
+        <root level="INFO">
+            <appender-ref ref="JsonConsole"/>
+            <appender-ref ref="FileAppender"/>
+        </root>
+    </springProfile>
+
+</configuration>
