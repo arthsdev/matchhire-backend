@@ -10,28 +10,26 @@ import java.util.UUID;
 
 /**
  * Represents a job vacancy posted by a company.
- * Each job belongs to a company and can have multiple applications.
- * Includes an active flag for soft deletion.
  */
-@Entity
+@Entity(name = "jobs")
 @Table(name = "jobs")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(of = "id")
 public class Job {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @EqualsAndHashCode.Include
+    @Column(nullable = false, unique = true, updatable = false, columnDefinition = "BINARY(16)")
     private UUID id;
 
-    @Column(nullable = false, unique = true, updatable = false)
+    @Column(nullable = false, unique = true, updatable = false, columnDefinition = "BINARY(16)")
     private UUID publicId;
 
-    @NotBlank(message = "Job title cannot be blank")
+    @NotBlank
     @Size(min = 10, max = 100)
     private String title;
 
@@ -48,16 +46,11 @@ public class Job {
     @OneToMany(mappedBy = "job", cascade = CascadeType.ALL)
     private List<Application> applications;
 
+    @Builder.Default
     private boolean active = true;
 
-    /**
-     * Lifecycle callback executed before persisting.
-     * Ensures that a publicId is generated if missing.
-     */
     @PrePersist
     public void prePersist() {
-        if (publicId == null) {
-            publicId = UUID.randomUUID();
-        }
+        if (publicId == null) publicId = UUID.randomUUID();
     }
 }

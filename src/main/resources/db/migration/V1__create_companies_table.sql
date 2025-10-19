@@ -1,16 +1,18 @@
 -- ==============================================================
--- V2__create_job_table.sql
--- Description: Creates the jobs table to store job postings.
+-- V1__create_companies_table.sql
+-- Description: Creates the companies table.
 -- ==============================================================
 
-CREATE TABLE jobs (
+CREATE TABLE companies (
     id BINARY(16) NOT NULL PRIMARY KEY,
     public_id BINARY(16) NOT NULL UNIQUE,
-    title VARCHAR(150) NOT NULL,
-    description TEXT NOT NULL,
-    location VARCHAR(100),
-    salary DECIMAL(10,2),
+    name VARCHAR(150) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    phone VARCHAR(20),
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+-- Index on email to speed up search queries and ensure uniqueness.
+CREATE INDEX idx_companies_email ON companies(email);

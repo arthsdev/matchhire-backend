@@ -10,6 +10,15 @@ import org.mapstruct.Mappings;
 @Mapper(componentModel = "spring")
 public interface ApplicationMapper {
 
+    @Mappings({
+            @Mapping(target = "id", ignore = true), // Ignored because it's initialized with a default value
+            @Mapping(target = "publicId", ignore = true),
+            @Mapping(target = "candidate", ignore = true),// Ignored because it's set manually in the service layer using the candidateId from the DTO
+            @Mapping(target = "job", ignore = true),  //Ignored because it's set manually in the service layer using the jobId from the DTO
+            @Mapping(target = "status", ignore = true),
+            @Mapping(target = "active", ignore = true),
+            @Mapping(target = "score", ignore = true)
+    })
     Application toEntity(ApplicationRequestDTO dto);
 
     @Mappings({
@@ -20,3 +29,4 @@ public interface ApplicationMapper {
     })
     ApplicationResponseDTO toResponseDTO(Application application);
 }
+

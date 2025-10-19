@@ -9,33 +9,30 @@ import java.util.UUID;
 
 /**
  * Represents a candidate applying for jobs.
- * This entity is part of the core domain model.
- * It stores candidate personal and professional information,
- * and maintains a relationship with job applications.
  */
-@Entity
+@Entity(name = "candidates")
 @Table(name = "candidates")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(of = "id")
 public class Candidate {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @EqualsAndHashCode.Include
+    @Column(nullable = false, unique = true, updatable = false, columnDefinition = "BINARY(16)")
     private UUID id;
 
-    @Column(nullable = false, unique = true, updatable = false)
+    @Column(nullable = false, unique = true, updatable = false, columnDefinition = "BINARY(16)")
     private UUID publicId;
 
-    @NotBlank(message = "Candidate name cannot be blank")
+    @NotBlank
     @Size(min = 10, max = 100)
     private String name;
 
-    @Email(message = "Invalid email format")
+    @Email
     @Column(unique = true)
     private String email;
 
@@ -48,16 +45,11 @@ public class Candidate {
     @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Application> applications;
 
+    @Builder.Default
     private boolean active = true;
 
-    /**
-     * Lifecycle callback executed before the entity is persisted.
-     * Ensures that a publicId is generated if missing.
-     */
     @PrePersist
     public void prePersist() {
-        if (publicId == null) {
-            publicId = UUID.randomUUID();
-        }
+        if (publicId == null) publicId = UUID.randomUUID();
     }
 }

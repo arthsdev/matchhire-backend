@@ -8,26 +8,24 @@ import lombok.*;
 import java.util.UUID;
 
 /**
- * Represents a candidate's application to a job.
- * This entity stores information about a candidate applying for a specific job,
- * including application status, optional match score, and active flag for soft deletion.
+ * Represents a candidate's application to a specific job.
  */
-@Entity
+@Entity(name = "applications")
 @Table(name = "applications")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(of = "id")
 public class Application {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @EqualsAndHashCode.Include
+    @Column(nullable = false, unique = true, updatable = false, columnDefinition = "BINARY(16)")
     private UUID id;
 
-    @Column(nullable = false, unique = true, updatable = false)
+    @Column(nullable = false, unique = true, updatable = false, columnDefinition = "BINARY(16)")
     private UUID publicId;
 
     @ManyToOne
@@ -41,20 +39,16 @@ public class Application {
     private Job job;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private Status status = Status.PENDING;
-
-    private boolean active = true;
 
     private Double score;
 
-    /**
-     * Lifecycle callback executed before persisting.
-     * Ensures that a publicId is generated if missing.
-     */
+    @Builder.Default
+    private boolean active = true;
+
     @PrePersist
     public void prePersist() {
-        if (publicId == null) {
-            publicId = UUID.randomUUID();
-        }
+        if (publicId == null) publicId = UUID.randomUUID();
     }
 }
