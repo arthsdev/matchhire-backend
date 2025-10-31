@@ -9,6 +9,7 @@
 The backend provides the foundation for the MatchHire platform, including:
 
 - 🔐 **JWT Authentication** with Spring Security 6
+- 🔁 **Refresh Token Flow** using HttpOnly cookies and Redis 7.2
 - 🪪 **Role-Based Access Control (RBAC)** for users (Admin, Company, Candidate)
 - 🧾 **Structured logging** with unique `traceId` for every request
 - ⚙️ **Clean architecture** with clear separation of layers (Controller → Service → Repository)
@@ -31,7 +32,8 @@ The backend provides the foundation for the MatchHire platform, including:
 | ORM | Spring Data JPA |
 | Object Mapping | MapStruct |
 | Validation | Jakarta Validation |
-| Security | Spring Security + JWT |
+| Security | Spring Security + JWT + Refresh Token |
+| Caching / Token Store | Redis 7.2 |
 | Logging | SLF4J + Logback (TraceId) |
 | Dependency Management | Lombok |
 | Testing | JUnit 5 |
@@ -50,7 +52,7 @@ src/
 │   │   ├── dto/             → Data Transfer Objects
 │   │   ├── exception/       → Custom Exceptions and Global Handler
 │   │   ├── mapper/          → MapStruct Mappers
-│   │   ├── security/        → JWT, Filters, and Config
+│   │   ├── security/        → JWT, Refresh Token, Filters, and Config
 │   │   ├── service/         → Business Logic
 │   │   └── MatchHireApplication.java
 │   └── resources/
@@ -81,17 +83,30 @@ spring.jpa.properties.hibernate.format_sql=true
 # JWT
 api.security.token.secret=your_secret_key_here
 api.security.token.expiration=3600000
+api.security.refresh.expiration=604800000  # 7 days
+
+# Redis
+spring.redis.host=localhost
+spring.redis.port=6379
 ```
 
 ---
 
 ## 🧠 Main Endpoints
 
-### 🔑 Authentication
+### 🔑 Authentication & Users
 | Method | Endpoint | Description |
 |--------|-----------|-------------|
-| `POST` | `/api/auth/login` | Authenticate user and return JWT |
-| `POST` | `/api/auth/register` | Register a new user |
+| `POST` | `/api/users/register` | Register a new user and return `publicId` |
+| `POST` | `/api/auth/login` | Authenticate user and return **access token** (body) and **refresh token** (cookie) |
+| `POST` | `/api/auth/refresh` | Use refresh token from cookie to get **new access token** |
+| `GET`  | `/api/users/me` | Get current user details using access token |
+
+**Notes:**
+- **Access token** → short-lived, sent in `Authorization` header
+- **Refresh token** → long-lived, stored as **HttpOnly cookie** in browser/Postman
+
+---
 
 ### 🏢 Companies
 | Method | Endpoint | Description |
@@ -142,13 +157,25 @@ Access the API at:
 
 ---
 
+## 🔁 Refresh Token Flow (Postman / Browser)
+
+1. **Register:** `POST /api/users/register`
+2. **Login:** `POST /api/auth/login` → access token in body + refresh token in cookie
+3. **Get current user:** `GET /api/users/me` with `Authorization: Bearer <access_token>`
+4. **Simulate expired token:** call `/api/users/me` with invalid/expired access token → 401/403
+5. **Refresh token:** `POST /api/auth/refresh` (cookie sent automatically) → get new `accessToken`
+6. **Use new access token:** call `/api/users/me` again → returns user data
+
+> This flow follows **best practices**: access token in header, refresh token in secure HttpOnly cookie, stored in Redis.
+
+---
+
 ## 🧱 Next Steps
 
-- 🔁 Implement **Refresh Token** flow
-- 🧍 Add **User and Role** entities
-- 🧰 Add **global exception handling** with error codes
 - 🐳 Add **Docker** and CI/CD pipelines
 - 📘 Integrate **Swagger/OpenAPI** for API documentation
+- 🧍 Expand **User and Role** management
+- 🧰 Improve **global exception handling** with error codes
 
 ---
 
@@ -162,3 +189,4 @@ Access the API at:
 ## 📜 License
 
 This project is licensed under the **MIT License** — feel free to use and adapt it.
+

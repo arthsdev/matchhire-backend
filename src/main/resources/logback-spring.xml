@@ -1,50 +1,74 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true">
 
-    <!-- Import properties from application.yml -->
+    <!--
+        ==========================================================
+        LOGBACK CONFIGURATION - MatchHire Project
+        Environment-aware configuration for DEV, TEST, and PROD.
+        Includes console output, JSON logs, rolling file logs, and error separation.
+        ==========================================================
+    -->
+
+    <!-- Load properties from application.yml -->
     <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="matchhire"/>
     <springProperty scope="context" name="ACTIVE_PROFILE" source="spring.profiles.active" defaultValue="dev"/>
 
-    <!-- ==== Common pattern for DEV environment ==== -->
+    <!-- ==========================================================
+         COMMON SETTINGS
+    ========================================================== -->
+
+    <!-- Log pattern for the console (used in DEV mode) -->
     <property name="CONSOLE_PATTERN"
               value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%highlight(%-5level)] [%cyan(${APP_NAME})] [%X{traceId}] [%thread] %logger{36} - %msg%n"/>
 
-    <!-- ==== Directory for log files ==== -->
+    <!-- Directory where log files will be stored -->
     <property name="LOG_PATH" value="logs"/>
 
-    <!-- ==== Appenders ==== -->
+    <!-- ==========================================================
+         APPENDERS
+         Define different output targets for logs
+    ========================================================== -->
 
-    <!-- Console appender (DEV: colored, readable logs) -->
+    <!--
+        Console Appender for DEV environment.
+        Provides colored, human-readable logs for debugging.
+    -->
     <appender name="ConsoleDev" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>${CONSOLE_PATTERN}</pattern>
         </encoder>
     </appender>
 
-    <!-- JSON Console appender (TEST/PROD: structured logs) -->
+    <!--
+        Console Appender with JSON output.
+        Used in TEST and PROD environments for better integration with log management tools (e.g., ELK stack).
+    -->
     <appender name="JsonConsole" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
             <providers>
-                <timestamp/>       <!-- Log timestamp -->
-                <version/>         <!-- Logstash version -->
-                <logLevel/>        <!-- Log level -->
-                <threadName/>      <!-- Thread name -->
-                <loggerName/>      <!-- Logger name -->
-                <message/>         <!-- Log message -->
-                <mdc/>             <!-- MDC properties (traceId, etc.) -->
-                <context/>         <!-- Logger context info -->
-                <callerData/>      <!-- Caller class/method/line -->
+                <timestamp/>
+                <version/>
+                <logLevel/>
+                <threadName/>
+                <loggerName/>
+                <message/>
+                <mdc/>
+                <context/>
+                <callerData/>
             </providers>
         </encoder>
     </appender>
 
-    <!-- File appender with daily rotation -->
+    <!--
+        Rolling File Appender for general logs.
+        Creates a new log file every day and compresses old logs.
+    -->
     <appender name="FileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_PATH}/${APP_NAME}.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- Daily rotated and compressed log files -->
+            <!-- Pattern for daily rotated log files -->
             <fileNamePattern>${LOG_PATH}/archive/%d{yyyy-MM-dd}/${APP_NAME}.log.gz</fileNamePattern>
-            <!-- Keep logs for 30 days -->
+            <!-- Keep 30 days of logs -->
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
@@ -60,20 +84,64 @@
         </encoder>
     </appender>
 
-    <!-- ==== Environment-specific configurations ==== -->
+    <!--
+        Dedicated file appender for error-level logs.
+        Useful for monitoring and alerting systems.
+    -->
+    <appender name="ErrorFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/${APP_NAME}-error.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/archive/%d{yyyy-MM-dd}/${APP_NAME}-error.log.gz</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <!-- Filter to include only ERROR-level logs -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <encoder>
+            <pattern>${CONSOLE_PATTERN}</pattern>
+        </encoder>
+    </appender>
 
-    <!-- DEV profile: colored console output -->
+    <!-- ==========================================================
+         LOGGER LEVEL CONFIGURATION
+         Adjusts verbosity for different packages
+    ========================================================== -->
+    <logger name="org.springframework" level="INFO"/>
+    <logger name="org.hibernate" level="WARN"/>
+    <logger name="org.apache.catalina" level="INFO"/>
+    <logger name="com.zaxxer.hikari" level="INFO"/>
+    <logger name="org.flywaydb" level="INFO"/>
+
+    <!-- ==========================================================
+         ENVIRONMENT-SPECIFIC ROOT LOG CONFIGURATIONS
+    ========================================================== -->
+
+    <!--
+        DEV profile:
+        - Colorized console logs for readability
+        - Error logs also saved in file
+    -->
     <springProfile name="dev">
         <root level="DEBUG">
             <appender-ref ref="ConsoleDev"/>
+            <appender-ref ref="ErrorFile"/>
         </root>
     </springProfile>
 
-    <!-- TEST and PROD profiles: JSON + file rotation -->
+    <!--
+        TEST & PROD profiles:
+        - Structured JSON logs (for log ingestion systems)
+        - Daily file rotation
+        - Separate error file
+    -->
     <springProfile name="test,prod">
         <root level="INFO">
             <appender-ref ref="JsonConsole"/>
             <appender-ref ref="FileAppender"/>
+            <appender-ref ref="ErrorFile"/>
         </root>
     </springProfile>
 

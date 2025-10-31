@@ -2,7 +2,7 @@ package br.com.artheus.matchhire.service;
 
 import br.com.artheus.matchhire.domain.model.User;
 import br.com.artheus.matchhire.domain.model.enums.UserRole;
-import br.com.artheus.matchhire.domain.repository.UserRepository;
+import br.com.artheus.matchhire.domain.repository.jpa.UserRepository;
 import br.com.artheus.matchhire.dto.RegisterDTO;
 import br.com.artheus.matchhire.dto.UserDTO;
 import br.com.artheus.matchhire.mapper.UserMapper;

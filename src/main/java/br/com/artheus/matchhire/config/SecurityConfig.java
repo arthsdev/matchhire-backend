@@ -1,5 +1,8 @@
-package br.com.artheus.matchhire.infrastructure.security;
+package br.com.artheus.matchhire.config;
 
+import br.com.artheus.matchhire.infrastructure.security.CustomUserDetailsService;
+import br.com.artheus.matchhire.infrastructure.security.JWTAuthorizationFilter;
+import br.com.artheus.matchhire.infrastructure.security.TokenService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -11,35 +14,47 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+/**
+ * Security configuration class: configures JWT authorization filter,
+ * password encoding, and public endpoints.
+ */
 @Configuration
 public class SecurityConfig {
 
     private final TokenService tokenService;
-    private final AuthenticationConfiguration authenticationConfiguration;
     private final CustomUserDetailsService userDetailsService;
+    private final AuthenticationConfiguration authenticationConfiguration;
 
     public SecurityConfig(TokenService tokenService,
-                          AuthenticationConfiguration authenticationConfiguration,
-                          CustomUserDetailsService userDetailsService) {
+                          CustomUserDetailsService userDetailsService,
+                          AuthenticationConfiguration authenticationConfiguration) {
         this.tokenService = tokenService;
-        this.authenticationConfiguration = authenticationConfiguration;
         this.userDetailsService = userDetailsService;
+        this.authenticationConfiguration = authenticationConfiguration;
     }
 
+    /**
+     * Expose the AuthenticationManager bean
+     */
     @Bean
     public AuthenticationManager authenticationManager() throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
+    /**
+     * Password encoder bean using BCrypt
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Configure HTTP security, JWT filters, and public endpoints
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        JWTAuthenticationFilter authenticationFilter =
-                new JWTAuthenticationFilter(authenticationManager(), tokenService);
+        // Only JWTAuthorizationFilter is needed
         JWTAuthorizationFilter authorizationFilter =
                 new JWTAuthorizationFilter(tokenService, userDetailsService);
 
@@ -47,14 +62,14 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login").permitAll()
-                        .requestMatchers("/api/users/register").permitAll()
+                        // Public endpoints
+                        .requestMatchers("/api/auth/login", "/api/auth/refresh", "/api/users/register").permitAll()
+                        // All other endpoints require authentication
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(authorizationFilter, UsernamePasswordAuthenticationFilter.class);
+                // Add authorization filter before UsernamePasswordAuthenticationFilter
+                .addFilterBefore(authorizationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 }
-
