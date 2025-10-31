@@ -1,7 +1,7 @@
 package br.com.artheus.matchhire.infrastructure.security;
 
 import br.com.artheus.matchhire.domain.model.User;
-import br.com.artheus.matchhire.domain.repository.UserRepository;
+import br.com.artheus.matchhire.domain.repository.jpa.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -19,9 +19,8 @@ public class CustomUserDetailsService implements UserDetailsService {
      * This is used both during login and when validating JWT tokens.
      */
     @Override
-    public UserDetails loadUserByUsername(String login) throws UsernameNotFoundException {
-        User user = userRepository.findByLogin(login)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with login: " + login));
-        return user;
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return userRepository.findByLogin(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 }

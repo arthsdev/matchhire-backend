@@ -1,3 +1,4 @@
 package br.com.artheus.matchhire.dto;
 
-public record AuthResponseDTO(String token) {}
+/** DTO for authentication response */
+public record AuthResponseDTO(String accessToken) {}

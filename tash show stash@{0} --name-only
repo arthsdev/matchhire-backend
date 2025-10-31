@@ -1,0 +1,75 @@
+[1mdiff --git a/src/main/java/br/com/artheus/matchhire/config/CorsConfig.java b/src/main/java/br/com/artheus/matchhire/config/CorsConfig.java[m
+[1mnew file mode 100644[m
+[1mindex 0000000..d007390[m
+[1m--- /dev/null[m
+[1m+++ b/src/main/java/br/com/artheus/matchhire/config/CorsConfig.java[m
+[36m@@ -0,0 +1,4 @@[m
+[32m+[m[32mpackage br.com.artheus.matchhire.config;[m
+[32m+[m
+[32m+[m[32mpublic class CorsConfig {[m
+[32m+[m[32m}[m
+[1mdiff --git a/src/main/java/br/com/artheus/matchhire/config/CorsProperties.java b/src/main/java/br/com/artheus/matchhire/config/CorsProperties.java[m
+[1mnew file mode 100644[m
+[1mindex 0000000..84e5355[m
+[1m--- /dev/null[m
+[1m+++ b/src/main/java/br/com/artheus/matchhire/config/CorsProperties.java[m
+[36m@@ -0,0 +1,4 @@[m
+[32m+[m[32mpackage br.com.artheus.matchhire.config;[m
+[32m+[m
+[32m+[m[32mpublic class CorsProperties {[m
+[32m+[m[32m}[m
+[1mdiff --git a/src/main/java/br/com/artheus/matchhire/config/JpaConfig.java b/src/main/java/br/com/artheus/matchhire/config/JpaConfig.java[m
+[1mnew file mode 100644[m
+[1mindex 0000000..be44cb8[m
+[1m--- /dev/null[m
+[1m+++ b/src/main/java/br/com/artheus/matchhire/config/JpaConfig.java[m
+[36m@@ -0,0 +1,4 @@[m
+[32m+[m[32mpackage br.com.artheus.matchhire.config;[m
+[32m+[m
+[32m+[m[32mpublic class JpaConfig {[m
+[32m+[m[32m}[m
+[1mdiff --git a/src/main/java/br/com/artheus/matchhire/config/RedisConfig.java b/src/main/java/br/com/artheus/matchhire/config/RedisConfig.java[m
+[1mnew file mode 100644[m
+[1mindex 0000000..f95341f[m
+[1m--- /dev/null[m
+[1m+++ b/src/main/java/br/com/artheus/matchhire/config/RedisConfig.java[m
+[36m@@ -0,0 +1,30 @@[m
+[32m+[m[32mpackage br.com.artheus.matchhire.config;[m
+[32m+[m
+[32m+[m[32mimport org.springframework.context.annotation.Bean;[m
+[32m+[m[32mimport org.springframework.context.annotation.Configuration;[m
+[32m+[m[32mimport org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;[m
+[32m+[m[32mimport org.springframework.data.redis.core.StringRedisTemplate;[m
+[32m+[m[32mimport org.springframework.data.redis.repository.configuration.EnableRedisRepositories;[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * Redis configuration for managing refresh tokens.[m
+[32m+[m[32m * This configuration enables only the Redis repository responsible for[m
+[32m+[m[32m * storing and validating refresh tokens. It uses Lettuce as the Redis client[m
+[32m+[m[32m * and defines a dedicated Redis connection factory and StringRedisTemplate.[m
+[32m+[m[32m * Keeping Redis repositories isolated prevents conflicts with JPA repositories.[m
+[32m+[m[32m */[m
+[32m+[m[32m@Configuration[m
+[32m+[m[32m@EnableRedisRepositories(basePackages = "br.com.artheus.matchhire.domain.repository.redis")[m
+[32m+[m[32mpublic class RedisConfig {[m
+[32m+[m
+[32m+[m[32m    @Bean[m
+[32m+[m[32m    public LettuceConnectionFactory redisConnectionFactory() {[m
+[32m+[m[32m        return new LettuceConnectionFactory();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @Bean[m
+[32m+[m[32m    public StringRedisTemplate redisTemplate(LettuceConnectionFactory connectionFactory) {[m
+[32m+[m[32m        return new StringRedisTemplate(connectionFactory);[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[32m+[m
+[1mdiff --git a/src/main/java/br/com/artheus/matchhire/infrastructure/security/SecurityConfig.java b/src/main/java/br/com/artheus/matchhire/config/SecurityConfig.java[m
+[1msimilarity index 73%[m
+[1mrename from src/main/java/br/com/artheus/matchhire/infrastructure/security/SecurityConfig.java[m
+[1mrename to src/main/java/br/com/artheus/matchhire/config/SecurityConfig.java[m
+[1mindex ba5e7f3..326264f 100644[m
+[1m--- a/src/main/java/br/com/artheus/matchhire/infrastructure/security/SecurityConfig.java[m
+[1m+++ b/src/main/java/br/com/artheus/matchhire/config/SecurityConfig.java[m
+[36m@@ -11,35 +11,47 @@[m [mimport org.springframework.security.crypto.password.PasswordEncoder;[m
+ import org.springframework.securit

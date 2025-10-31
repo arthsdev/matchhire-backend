@@ -1,33 +1,42 @@
 package br.com.artheus.matchhire.controller;
 
 import br.com.artheus.matchhire.dto.AuthRequestDTO;
-import br.com.artheus.matchhire.dto.LoginResponseDTO;
+import br.com.artheus.matchhire.dto.AuthResponseDTO;
 import br.com.artheus.matchhire.service.AuthService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import br.com.artheus.matchhire.infrastructure.util.CookieHelper;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * Authentication controller: only login (token) endpoints.
- */
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
 
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
+
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid AuthRequestDTO dto) {
-        try {
-            String token = authService.login(dto.login(), dto.password());
-            return ResponseEntity.ok(new LoginResponseDTO(token));
-        } catch (AuthenticationException ex) {
-            // Bad credentials -> 401 Unauthorized (standard)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+    public ResponseEntity<AuthResponseDTO> login(@RequestBody AuthRequestDTO request,
+                                                 HttpServletResponse response) {
+
+        // Use "login", not "username"
+        var loginResult = authService.login(request.login(), request.password());
+
+        // Attach refresh token only in cookie
+        response.addHeader("Set-Cookie", CookieHelper.buildRefreshTokenCookie(loginResult.refreshToken()).toString());
+
+        // Return only access token in JSON
+        return ResponseEntity.ok(new AuthResponseDTO(loginResult.accessToken()));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponseDTO> refreshToken(
+            @CookieValue(value = "refreshToken", required = false) String refreshToken,
+            HttpServletResponse response
+    ) {
+        return ResponseEntity.ok(authService.refreshAccessToken(refreshToken, response));
     }
 }
